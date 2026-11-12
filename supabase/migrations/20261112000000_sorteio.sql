@@ -124,6 +124,7 @@ create table if not exists public.draws (
 );
 create unique index if not exists draws_one_valid_per_prize on public.draws (prize_id) where status = 'valido';
 create index if not exists draws_participant_idx on public.draws (participant_id);
+create index if not exists draws_prize_idx on public.draws (prize_id);
 
 -- ---------------------------------------------------------------------
 -- Notificações (WhatsApp)
@@ -471,27 +472,27 @@ alter table public.audit_log     enable row level security;
 alter table public.rate_limits   enable row level security;
 
 drop policy if exists admins_self on public.admins;
-create policy admins_self on public.admins for select to authenticated using (user_id = auth.uid());
+create policy admins_self on public.admins for select to authenticated using (user_id = (select auth.uid()));
 
 drop policy if exists settings_admin_read on public.settings;
-create policy settings_admin_read on public.settings for select to authenticated using (public.is_admin());
+create policy settings_admin_read on public.settings for select to authenticated using ((select public.is_admin()));
 drop policy if exists settings_admin_update on public.settings;
-create policy settings_admin_update on public.settings for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy settings_admin_update on public.settings for update to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
 
 drop policy if exists prizes_admin_all on public.prizes;
-create policy prizes_admin_all on public.prizes for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy prizes_admin_all on public.prizes for all to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
 
 drop policy if exists participants_admin_read on public.participants;
-create policy participants_admin_read on public.participants for select to authenticated using (public.is_admin());
+create policy participants_admin_read on public.participants for select to authenticated using ((select public.is_admin()));
 
 drop policy if exists draws_admin_read on public.draws;
-create policy draws_admin_read on public.draws for select to authenticated using (public.is_admin());
+create policy draws_admin_read on public.draws for select to authenticated using ((select public.is_admin()));
 
 drop policy if exists notifications_admin_read on public.notifications;
-create policy notifications_admin_read on public.notifications for select to authenticated using (public.is_admin());
+create policy notifications_admin_read on public.notifications for select to authenticated using ((select public.is_admin()));
 
 drop policy if exists audit_admin_read on public.audit_log;
-create policy audit_admin_read on public.audit_log for select to authenticated using (public.is_admin());
+create policy audit_admin_read on public.audit_log for select to authenticated using ((select public.is_admin()));
 -- rate_limits: sem políticas (somente service_role)
 
 -- ---------------------------------------------------------------------
@@ -511,6 +512,9 @@ revoke all on function public.register_participant(text, text, text, boolean, te
 revoke all on function public.hit_rate_limit(text, int, int) from public, anon, authenticated;
 revoke all on function public.audit(text, text, text, jsonb) from public, anon, authenticated;
 revoke all on function public.secure_random_int(int) from public, anon, authenticated;
+revoke all on function public.trg_audit_changes() from public, anon, authenticated;
+revoke all on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
 grant execute on function public.register_participant(text, text, text, boolean, text, text, text) to service_role;
 grant execute on function public.hit_rate_limit(text, int, int) to service_role;
 

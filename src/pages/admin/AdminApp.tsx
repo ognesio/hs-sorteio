@@ -37,7 +37,9 @@ export default function AdminApp() {
         <div className="sticker max-w-sm p-7">
           <h1 className="display text-3xl">Acesso negado</h1>
           <p className="mt-3 text-sm">A conta <b>{email}</b> não está autorizada como administradora.</p>
-          <button className="btn btn-md btn-ink mt-5 w-full" onClick={() => backend.admin.signOut()}>Sair</button>
+          <p className="mt-2 text-[13px] text-graphite-700">Se o acesso acabou de ser liberado, toque em “Verificar de novo”. Se não resolver, saia e entre novamente.</p>
+          <button className="btn btn-md btn-ink mt-5 w-full" onClick={() => { setGate('loading'); backend.admin.getSession().then(async (s) => { if (!s) return setGate('out'); setGate((await backend.admin.isAdmin().catch(() => false)) ? 'ok' : 'denied') }) }}>Verificar de novo</button>
+          <button className="btn btn-md btn-paper mt-3 w-full" onClick={() => backend.admin.signOut()}>Sair e entrar com outra conta</button>
         </div>
       </div>
     )

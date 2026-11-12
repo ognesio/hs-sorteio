@@ -62,8 +62,12 @@ export function createSupabaseBackend(url: string, key: string): Backend {
         await sb.auth.signOut()
       },
       async isAdmin() {
-        const { data: u } = await sb.auth.getUser()
-        if (!u.user) return false
+        const { data: u, error: uErr } = await sb.auth.getUser()
+        if (uErr || !u.user) {
+          // sessão antiga (ex.: conta apagada/recriada): limpa e volta para o login
+          await sb.auth.signOut().catch(() => {})
+          return false
+        }
         const { data } = await sb.from('admins').select('user_id').eq('user_id', u.user.id).maybeSingle()
         return Boolean(data)
       },

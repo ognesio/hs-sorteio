@@ -1,0 +1,12 @@
+project_id = "sunset-house"
+
+# Edge Functions fazem a própria autenticação (token do participante ou JWT de admin).
+# verify_jwt = false também permite as novas chaves publicáveis (sb_publishable_...).
+[functions.register]
+verify_jwt = false
+
+[functions.whatsapp-send]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
